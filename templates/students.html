@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>Students</title>
+</head>
+<body>
+<h1>Student list</h1>
+{% for stu in student_list %}
+    <div class="card">
+        <div class="card-body">
+            <h4 >{{ stu.mssv }}</h4>
+{#            <p >{{ stu._id }}</p>#}
+            <p >{{ stu.ho_ten }}</p>
+            <p >{{ stu.birth|date:"d\/m\/Y"}}</p>
+        </div>
+    </div>
+{% endfor %}
+<br>
+<div class="card">
+    <div class="card-body">
+        <form method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Save">
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Người dùng</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off">
+                {% csrf_token %}
+                <div class="row text-center">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="group" class=" requiredField">Vai trò
+                                    <span class="asteriskField">*</span>
+                                </label>
+                                <select name="role" class="select form-control" id="role">
+                                    <option value="none">Lựa chọn</option>
+                                    {% for role in listRole %}
+                                        {% if role.roleID|stringformat:"s" == roleId|stringformat:"s" %}
+                                            <option value="{{role.roleID}}" selected>{{role.roleName}}</option>
+                                        {% else %}
+                                            <option value="{{role.roleID}}">{{role.roleName}}</option>
+                                        {% endif %}
+                                        {% comment %} <option value="{{role.roleID}}"
+                                            {% if roleId == role %}selected{% endif %}
+                                        >{{role.roleName}}</option> {% endcomment %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% comment %} <div class="form-group row">
+                            <div class="col-sm-12">
+                                {{form.role|as_crispy_field}}
+                            </div>
+                        </div> {% endcomment %}
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="roleUnit" class=" requiredField">Thuộc đơn vị
+                                    <span class="asteriskField">*</span>
+                                </label>
+                                <select name="roleUnit" class="select form-control" id="roleUnit">
+                                    <option value="none">Lựa chọn</option>
+                                    {% for key, value in listUnits.items %}
+                                        <option value="{{ key }}" 
+                                            {% if key|stringformat:"s" == roleUnit|stringformat:"s" %}
+                                                selected
+                                            {% endif %}
+                                        >{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                {{form.username|as_crispy_field}}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                {{form.password|as_crispy_field}}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                <label class="requiredField">Bắt buộc khi là tài khoản sinh viên
+                                    <span class="asteriskField">*</span>
+                                </label>
+                            </div>
+                            <div class="col-sm-12">
+                                <label for="major" class=" requiredField">Ngành
+                                    <span class="asteriskField">*</span>
+                                </label>
+                                <select name="major" class="select form-control">
+                                    <option value="none">Lựa chọn</option>
+                                    {% for major in listMajor %}
+                                        {% if major.majorID|stringformat:"s" == majorId|stringformat:"s" %}
+                                            <option value="{{major.majorID}}" selected>{{major.majorName}}</option>
+                                        {% else %}
+                                            <option value="{{major.majorID}}">{{major.majorName}}</option>
+                                        {% endif %}
+                                        
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="group" class=" requiredField">Lớp
+                                    <span class="asteriskField">*</span>
+                                </label>
+                                <select name="group" class="select form-control">
+                                    <option value="none">Lựa chọn</option>
+                                    {% for group in listGroup %}
+                                        {% if group.groupID|stringformat:"s" == groupId|stringformat:"s" %}
+                                            <option value="{{group.groupID}}" selected>{{group.groupName}}</option>
+                                        {% else %}
+                                            <option value="{{group.groupID}}">{{group.groupName}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="form-group  text-center">
+                    <button type="submit" id="submit" class="m-4 btn activebutton">Thêm mới</button>
+                    <a href="{% url 'user' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>        
+</div> 
+<script type="text/javascript">
+    let textBtn = () => {  
+        if (document.getElementsByTagName("input")[1].value) document.getElementById("submit").innerText = "Cập nhật";
+    }
+    textBtn();
+</script>
+{% endblock %}

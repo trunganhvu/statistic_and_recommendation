@@ -1,0 +1,95 @@
+{% extends "./bootstrap.html" %}
+{% load bootstrap4 %}
+{% block bootstrap4_content %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/baseadmin.css' %}">
+<style type="text/css">
+.card {border-radius: 21px;}
+.footer {
+    position: absolute;
+    width: 100%;
+    font-size: 13px;
+    min-width: 450px;
+    bottom: 0;
+}
+body {
+    min-width: 450px;
+}
+.container {
+    position: relative;
+    min-height: calc(100vh - 300px);
+}
+.row{
+    background-color: #e2e0e0;
+}
+.card-header {
+    border-top-right-radius: 21px!important;
+    border-top-left-radius: 21px!important;
+    border-bottom-right-radius: 0!important;
+    border-bottom-left-radius: 0!important;
+}
+@media only screen and (max-width: 600px) {
+    .footer {
+        bottom: initial;
+    }
+}
+</style>
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom ">
+    <a class=" my-0 mr-md-auto font-weight-normal navbar-brand">
+        <img src="https://uet.vnu.edu.vn/wp-content/uploads/2017/02/logo2_new.png" alt="Logo" width="80" height="80">
+        Hệ thống dự báo và tư vấn kết quả học tập
+    </a>
+    <div class="dropdown d-inline pr-5">
+        {% if user.is_authenticated %}
+            <a href="#" class="btn activebutton dropbtn">{{ user.username }}</a>
+            <div class="dropdown-content">
+                <a id="" href="{% url 'logout' %}" class="p-2 text-muted" href="">Đăng xuất</a>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn activebutton">Đăng nhập</a>
+        {% endif %}
+    </div>
+</div>       
+<div class="container pt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Giới thiệu</h5>
+                <div class="card-body">
+                    <h5 class="card-title">Hệ thống đánh giá và tư vấn học tập.</h5>
+                    <p class="card-text">1. Đưa ra dự đoán điểm số, kết quả học tập cho sinh viên.</p>
+                    <p class="card-text">2. Đưa ra gợi ý môn học phù hợp ngành học, thời gian học và điểm số theo mong muốn.</p>
+                    <p class="card-text">3. Thống kế kết quả học tập của các ngành, khóa, năm học và môn học.</p>     
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h5 class="card-header">Hướng dẫn sử dụng</h5>
+                <div class="card-body">
+                    <p class="card-text">1. Chọn nút đăng nhập rồi điền đầy đủ tài khoản sinh viên và nhấn nút "Đăng nhập".</p>
+                    <p class="card-text">2. Lựa chọn mục "Thống kê" để xem các thống kê về môn học, điểm theo khóa, ngành học và năm học.</p>
+                    <p class="card-text">3. Lựa chọn mục "Gợi ý môn học" để xem các các môn học gợi ý phù hợp đối với sinh viên cụ thể.</p>
+                    <p class="card-text">4. Lựa chọn mục "Dự đoán điểm" để xem kết quả dự đoán của sinh viên cụ thể dựa trên dữ liệu điểm đã có.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="bg-white mt-3 p-4 footer">
+    <div class="text-center text-secondary">
+        Phiên bản thử nghiệm sản phẩm phần mềm của Đề tài QG.20.57.<br>
+        © Bản quyển thuộc Đại học Quốc Gia Hà Nội, Trường Đại học Công nghệ<br>
+        Nhóm tác giả thực hiện đề tài.
+    </div>
+</div>
+<script>
+    let pathname_url = window.location.pathname; 
+    let pathname_url_active = pathname_url.split("/")[1];
+    function activaCurrentUrlElement(){            
+        let element = document.getElementById(pathname_url_active);
+        if (element != null) element.classList.add("activeElementUrl");     
+    }
+    activaCurrentUrlElement();
+</script>
+{% endblock %}

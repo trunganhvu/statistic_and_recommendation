@@ -1,0 +1,22 @@
+.table th{
+    cursor: pointer;
+}
+.table .th-sort-asc::after {
+  content: "\25b4";
+  margin-left: 5px;
+}
+.table .th-sort-desc::after {
+  content: "\25be";
+  margin-left: 5px;
+}
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+}
+.pagination a.active {
+  background-color: #396AA1;
+  color: white;
+}
+.pagination a:hover:not(.active) {background-color: #ddd;}

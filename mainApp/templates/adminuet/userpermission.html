@@ -1,0 +1,80 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/baseadmin.css' %}">
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Người dùng</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off" action="{% url 'user-permission-update' %}">
+                {% csrf_token %}
+                <div class="row text-center">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label class=" requiredField" for="roleName">Người dùng
+                                    <span class="asteriskField">*</span>
+                                </label><br> 
+                                <select multiple class="form-control" name="user">
+                                    {% for user in users %}
+                                        <option value="{{ user }}" selected>{{ user }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">    
+                                <label class=" requiredField" for="roleName">Danh sách chức năng
+                                    <span class="asteriskField">*</span>
+                                </label><br>       
+                                {% for function in functions %}
+                                    <label class="custom-control custom-checkbox">
+                                        {% if function.functionID in currentFunctions %}
+                                            <input type="checkbox" class="custom-control-input" name="function" value="{{ function.functionID }}" checked>
+                                        {% else %}
+                                            <input type="checkbox" class="custom-control-input" name="function" value="{{ function.functionID }}">
+                                        {% endif %}
+                                        {% comment %} <input type="checkbox" class="custom-control-input" name="function" value="{{function.functionID}}"> {% endcomment %}
+                                        <span class="custom-control-indicator"></span>
+                                        <span class="custom-control-description">{{ function }}</span>
+                                    </label><br>
+                                {% endfor %}
+                            </div>
+                            <div class="col-sm-12">                            
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="form-group  text-center">
+                    <button type="submit" id="submit" class="m-4 btn activebutton">Phân quyền</button>
+                    <a href="{% url 'user' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>        
+</div> 
+<script type="text/javascript">
+    let textBtn = () => {  
+        if (document.getElementsByTagName("input")[1].value) document.getElementById("submit").innerText = "Cập nhật";
+    }
+    textBtn();
+</script>
+{% endblock %}

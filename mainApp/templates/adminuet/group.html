@@ -1,0 +1,119 @@
+{% extends "./base.html" %}
+{% block content %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/unit.css' %}">
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Lớp</li>
+    </ol>
+    {% include 'student/successmessage.html' %}
+    <div class=" card">
+        <div class="card-header">
+            <h5>Lớp</h5>
+        </div>
+        <div class="card-body">
+            <div class="card-title row">
+                <div class="col-sm-7">
+                    <a href="{% url 'group-import-page' %}" class="btn activebutton">Nhập file</a>
+                    <a href="{% url 'group-export-page' %}" class="btn activebutton">Xuất file</a>
+                    <a href="{% url 'group-form' %}" class="btn btn-primary activebutton">Thêm mới</a>
+                        <select id="numberofrow" class="custom-select col-sm-2" onchange="redictUrlClickOption()">
+                            <option value="10">10</option>
+                            <option value="50">50</option>
+                            <option value="100" >100</option>
+                            <option value="1000">1000</option>
+                            <option value="3000">3000</option>
+                        </select>
+                </div>               
+                <div class=" form-inline col-sm-5">
+                    <input onkeyup="searchForUnit()" class="form-control col-sm-12 inline" id="myInput" type="text" placeholder="Tìm kiếm...">
+                </div>
+            </div>
+            <div class="table-data">
+                <table class="table" id="myTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th scope="col">STT</th>
+                            <th scope="col">Tên lớp</th>
+                            <th scope="col">Khóa</th>
+                            <th scope="col">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"> 
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center">
+                <nav aria-label="Page navigation ">
+                    <ul id="pagination" class="pagination justify-content-center">
+                    </ul>
+                </nav>
+            </div>
+        </div> 
+    </div>
+</div> 
+<script type="text/javascript" src="{% static 'js/table.js' %}"></script>
+<script type="text/javascript">
+    let pathAdmin = '/adminuet';
+    let url_api = '';
+    let offset = ({{ page }} - 1) * getNumberOfRowInSelections(); //offet để truyền vào api để truy vấn từ ví trí offset
+    let limit = {{limit}}; //limt lấy ban đầu từ url page1/limit10/ là giá trị mặc định
+    let pathForPage = '/group/page';
+    let pathApiGetList = '/group-getlist/';
+    let currentPage = {{page}};
+    
+    /*
+    Chạy hàm khởi tạo.
+    */
+    main(offset, limit);
+
+    /*
+    Hàm renderTable() nhận đầu vào là dữ liệu json của fetchJson đã get từ API
+    render ra các dòng và thao tác ở trong bảng dữ liệu.
+    */
+    function renderTable(mydata){
+        let url_update = pathAdmin + '/group-form/';
+        let url_delete = pathAdmin + '/group-delete/';
+        let units = mydata.data;
+        let rowHTML = [];
+        for (let [index, data] of units.entries()){
+            let tempIndex = index + 1 + limit * ({{ page }} - 1);
+            let row = '<tr>'
+                    + '<td>' + tempIndex + '</td>'
+                    + '<td>' + encodeHTML(data.groupName) + '</td>'
+                    + '<td>' + encodeHTML(data.generation) + '</td>'
+                    + "<td><a href=\"" + url_update  + data.groupID + "\"> Sửa </a> | "
+                    + "<a onclick=\"checkArgeeDelete()\" href=\"" + url_delete  + data.groupID + "\"> Xóa</a></td>"
+                    + '</tr>';
+            rowHTML.push(row);
+        }
+        document.getElementById("table-body").innerHTML += rowHTML.join("");
+    }
+    checkArgeeDelete = function(courseCode){
+        let msg = confirm("Xóa dữ liệu này sẽ mất hết các dữ liệu khác liên quan.\nBạn chắc chắn muốn xóa?" );
+        if (!msg) {
+            event.preventDefault();
+        }
+    }
+
+    function searchForUnit(){
+    // Hàm sắp xếp theo thứ tự giá trị của bảng theo thuộc tính
+    let input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById("myInput");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("myTable");
+    tr = table.getElementsByTagName("tr");
+    for (i = 0; i < tr.length; i++){
+        td = tr[i].getElementsByTagName("td")[1];
+        if (td) {
+            txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) tr[i].style.display = "";
+            else tr[i].style.display = "none";
+        }   
+    }
+}
+</script>
+{% comment %} <script type="text/javascript" src="{% static 'js/sort.js' %}"></script> {% endcomment %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "./base.html" %}
+{% block content %}
+<div class="container">
+    {% comment %} <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+    </ol> {% endcomment %}
+    {% include 'student/successmessage.html' %}
+    <div class="row">
+        <div class="col-sm-3">
+            {% if dict_function %}
+                {% with listFunction=dict_function %}
+            <div class="card">
+                <ul class="list-group list-group-flush">
+                    <a href="{% url 'profile' %}" >
+                        <li id="profile" class="list-group-item ">Hồ sơ</li>
+                    </a>
+                </ul>
+                {% if 'viewlearningoutcome' in listFunction %}
+                <ul class="list-group list-group-flush">
+                    <a href="{% url 'viewlearningoutcome' %}" >
+                        <li id="viewlearningoutcome" class="list-group-item ">Bảng điểm</li>
+                    </a>
+                </ul>
+                {% endif %}
+            </div>
+                {% endwith %}  
+            {% endif %}
+        </div>
+        <script>
+            function activaCurrentUrlElement(){                   
+                document.getElementById(pathname_url_active).classList.add("activebutton");
+            }
+            activaCurrentUrlElement();
+        </script>
+        <div class="col-sm-9">
+            {% block content-profile %}(no content){% endblock %}
+        </div>
+    </div>
+</div>    
+{% endblock %}
+

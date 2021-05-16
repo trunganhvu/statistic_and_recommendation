@@ -1,0 +1,432 @@
+{% extends "./base.html" %}
+{% block content %}
+{% load static %}
+<style>
+.spinner-border {width: 1rem; height: 1rem; border: 0.1em solid currentColor; border-right-color: transparent; display:none;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Thống kê</li>
+        <li class="breadcrumb-item active" aria-current="page">GPA</li>
+    </ol>
+    <div class="card">
+        <div class="card-header">
+            <h5>Thống kê</h5>
+        </div>
+        <div class="card-body">
+            <a href="" class="btn activebutton"  data-toggle="modal" data-target="#exampleModal">Tạo biểu đồ</a>
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="text-danger" id="messages"></div>
+                            <div class="form-group pb-3">
+                                <label for="unit-filter" class="col-form-label">Trường:</label>
+                                <select class="col-sm-12 custom-select" name="unit-filter" id="unit-filter" onchange="getMajorAndGeneration()">
+                                    <option value="none">Lựa chọn</option>
+                                    {% if units %}
+                                        {% for unit in units %}
+                                            <option value="{{ unit.unitID }}">{{ unit.unitName }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                                <label for="major-filter" class=" col-form-label">Ngành:</label>
+                                <select class="col-sm-12 select2-hidden-accessible custom-select" name="major-filter" id="major-filter">
+                                    <option value="none">Lựa chọn</option>
+                                </select>
+                                <label for="generation-filter" class="col-form-label">Khóa:</label>
+                                <select class="col-sm-12 select2-hidden-accessible custom-select" name="generation-filter" id="generation-filter">
+                                    <option value="none">Lựa chọn</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            {% if dict_function %}
+                                {% if 'calculategpa' in dict_function %}
+                                    <a class="btn activebutton" onclick="getApiReevaluation()" data-toggle="modal" data-target="#exampleModal12">
+                                        <div id="spinner-border" class="spinner-border text-light" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    Tính toán dữ liệu</a>
+                                {% endif %}
+                            {% endif %}
+                            <a href="" class="btn activebutton" id="btn-create-chart" data-toggle="modal" onclick="changChart()">Tạo biểu đồ</a>
+                            <a href="#" class="btn btn-secondary" data-dismiss="modal">Hủy</a>
+                        </div>
+                    </div>
+                </div>
+            </div>            
+            <div class="text-danger" id="messagesGetChart" style="display:none">Thống kê này hiện tại chưa có dữ liệu</div>
+            <canvas id="line-chart1" width="800" height="450"></canvas>
+            <div id="br" style="display:none;"><br><br><br></div>
+            <div class="text-danger justify-content-center" id="message"></div>
+            <canvas id="line-chart2" width="800" height="450"></canvas>
+        </div>  
+    </div>
+</div> 
+{% comment %} <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script> {% endcomment %}
+<script type="text/javascript" src="{% static 'js/chart.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/select2.min.js' %}"></script>
+
+<script type="text/javascript">
+    let chart;
+    let chart2;
+    let pathAPI = '/statistic/gpa' ;
+    let methodCall = 'get';
+    sessionStorage.clear();
+    // Nếu load lần đầu thì set kích thước = 0 
+    if (chart === undefined){
+        document.getElementById("line-chart1").style.width = "0px";
+        document.getElementById("line-chart1").style.height = "0px";
+    }
+    if (chart2 === undefined){
+        document.getElementById("line-chart2").style.width = "0px";
+        document.getElementById("line-chart2").style.height = "0px";
+    }
+    // Xử lý sự kiện tạo ra một biểu đồ mới reset lại chart để không còn dữ liệu cũ lấy dự liệu từ api
+    function changChart(){
+        if (chart !== undefined){
+            chart.destroy();
+        }
+        if (chart !== undefined){
+            chart2.destroy();
+        }
+        if (validateValueFilter()){
+            let url = getValueFilter();
+            fetchJson(pathAPI, url);
+            sessionStorage.setItem("SessionName",url);
+        } else if (validateValueFilter2()){
+            renderChart(mstData);
+        } 
+    }
+
+    function validateValueFilter(){
+        let unit = document.getElementById("unit-filter").value;
+        let major = document.getElementById("major-filter").value;
+        let generation = document.getElementById("generation-filter").value;
+        let path = '/' + unit + '/' + major + '/' + generation + '/' + methodCall;
+        document.getElementById("btn-create-chart").removeAttribute("data-dismiss");
+        if (path == sessionStorage.getItem("SessionName") && sessionStorage.getItem("SessionName") !== null){
+            return false;
+        }
+        if (unit == "" || major == "" || generation == "" || unit == "none" || major == "none" || generation == "none"){
+            document.getElementById("messages").innerHTML = "Hãy chọn lại đầy đủ các thông tin.";
+            return false;
+        } else {
+            document.getElementById("messages").innerHTML = '';
+            document.getElementById("btn-create-chart").setAttribute("data-dismiss", "modal");
+        }
+        return true;
+    }
+
+    function validateValueFilter2(){
+        let unit = document.getElementById("unit-filter").value;
+        let major = document.getElementById("major-filter").value;
+        let generation = document.getElementById("generation-filter").value;
+        if (unit == "" || major == "" || generation == "" || unit == "none" || major == "none" || generation == "none"){
+            document.getElementById("messages").innerHTML = "Hãy chọn lại đầy đủ các thông tin.";
+            return false;
+        } else {
+            document.getElementById("messages").innerHTML = '';
+            document.getElementById("btn-create-chart").setAttribute("data-dismiss", "modal");
+        }
+        return true;
+    }
+
+    function getMajorAndGeneration(){
+        getMajor();
+        getGeneration();
+    }
+    // lấy url API và fetch lấy dữ liệu và tạo child của select-html
+    // Khi nhân thay đổi trường(Unit) thì hiển thị ra các Ngành
+    function getMajor(){
+        let unitID = document.getElementById('unit-filter').value;
+        let selectMajor = document.getElementById('major-filter');
+        selectMajor.querySelectorAll('*').forEach(n => n.remove());
+        let option = document.createElement('option');
+        option.appendChild(document.createTextNode("Lựa chọn"));
+        option.value = "none";
+        selectMajor.appendChild(option);
+        if (unitID != 'none'){
+            let url_api = changeUnitToCallAPI('majors/', unitID);
+            fetch(url_api)
+            .then(function(response) {
+                if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+                let myjson_data = response.json();
+                return myjson_data;
+            })
+            .then(function(mydata){
+                for (let i = 0; i < mydata.length; i++){
+                    let id = mydata[i].majorID;
+                    let majorName = mydata[i].majorName
+                    option = document.createElement('option');
+                    option.appendChild(document.createTextNode(majorName));
+                    option.value = id;
+                    selectMajor.appendChild(option);
+                } 
+            })
+            .catch(function(error) {
+                console.log("error");
+            })
+        }
+    }
+    // lấy url API và fetch lấy dữ liệu và tạo child của select-html
+    // Khi nhân thay đổi Ngành(Major) thì hiển thị ra các Khóa
+    function getGeneration(){
+        let unitID = document.getElementById('unit-filter').value;
+        let selectGeneration = document.getElementById('generation-filter');
+        selectGeneration.querySelectorAll('*').forEach(n => n.remove());
+        let option = document.createElement('option');
+        option.appendChild(document.createTextNode("Lựa chọn"));
+        option.value = "none";
+        selectGeneration.appendChild(option);
+        if (unitID != 'none'){
+            let url_api = changeUnitToCallAPI('generations/', unitID);
+            fetch(url_api)
+            .then(function(response) {
+                if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+                let myjson_data = response.json();
+                return myjson_data;
+            })
+            .then(function(mydata){
+                for (let i = 0; i < mydata.length; i++){
+                    let id = mydata[i].generationID;
+                    let name = mydata[i].generationName;
+                    option = document.createElement('option');
+                    option.appendChild(document.createTextNode(name));
+                    option.value = id;
+                    selectGeneration.appendChild(option);
+                } 
+            })
+            .catch(function(error) {
+                console.log("error");
+            })
+        }
+    }
+
+    // gọi đến api tính toàn lại thống kê gpa với phương thức Reevaluation
+    async function getApiReevaluation() {
+        let unit = document.getElementById("unit-filter");
+        let major = document.getElementById("major-filter");
+        let generation = document.getElementById("generation-filter");
+        let apiReevaluation = '';
+        let count = 0;
+        if (unit.value == "" || major.value == "" || generation.value == "" || unit.value == "none" || major.value == "none" || generation.value == "none"){
+            document.getElementById("messages").innerHTML = "Hãy chọn lại đầy đủ các thông tin.";
+        } else {
+            document.getElementById("messages").innerHTML = '';
+            document.getElementById("spinner-border").style.display = "inline-block";
+            let unitSelect = unit.value;
+            let majorSelect = major.value;
+            let generationSelect = generation.value;
+            apiReevaluation = apiReevaluation.concat('http://').concat(window.location.host).concat(pathAPI);
+            apiReevaluation = apiReevaluation.concat('/').concat(unitSelect).concat('/').concat(majorSelect);
+            apiReevaluation = apiReevaluation.concat('/').concat(generationSelect).concat('/reevaluation');
+            await fetch(apiReevaluation)
+            .then(function(response) {
+                if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+                let myjson_data = response.json();
+                return myjson_data;
+            })
+            .then(function(mydata){
+                count = mydata.updated;
+                document.getElementById("spinner-border").style.display = "none";
+            })
+            .catch(function(error) {
+                console.log("error");
+            });
+            setTimeout(function() {
+                alert('Đã tính toán thành công ' + count + ' bản ghi.');
+            },100)
+        }
+    }
+    // get thông tin trong các filter input người dùng trả về path theo tứ tự trong url api 
+    function getValueFilter(){
+        let unit = document.getElementById("unit-filter").value;
+        let major = document.getElementById("major-filter").value;
+        let generation = document.getElementById("generation-filter").value;
+        return '/' + unit + '/' + major + '/' + generation + '/' + methodCall;
+    }
+    // Hàm renderChart() nhận đầu vào là dữ liệu json của fetchJson đã get từ API
+    // render ra các dòng và thao tác ở trong bảng dữ liệu.
+    function renderChart(mydata){
+        let arrayKey = Object.keys(mydata.semester_number);
+        let arrayValue = Object.values(mydata.semester_number);
+        let major = document.getElementById("major-filter").options[document.getElementById("major-filter").selectedIndex].text;
+        let generation = document.getElementById("generation-filter").options[document.getElementById("generation-filter").selectedIndex].text;
+        let arrayCurrentMax = []
+        let arrayCurrentMin = []
+        let arrayCurrentAvg = []
+        let arraySemesterMax = []
+        let arraySemesterMin = []
+        let arraySemesterAvg = []
+        // gắn các đối tượng vào cho các mảng để lấy ra lần lượt max, min avg cho semester và current
+        for (let i = 0; i < arrayValue.length; i++) {
+            arrayCurrentMax.push(arrayValue[i].currentGpa.max);
+            arrayCurrentMin.push(arrayValue[i].currentGpa.min);
+            arrayCurrentAvg.push(arrayValue[i].currentGpa.avg);
+            arraySemesterMax.push(arrayValue[i].semesterGpa.max);
+            arraySemesterMin.push(arrayValue[i].semesterGpa.min);
+            arraySemesterAvg.push(arrayValue[i].semesterGpa.avg);
+        }
+        //console.log(arrayValue.length)
+        let titleChart = 'Điểm GPA của ' + generation + ' - ngành ' + major;
+        let titleChart2 = 'Điểm GPA theo từng kỳ của ' + generation + ' - ngành ' + major;
+        // Thẻ gắn để hiển thị biểu đồ
+        let ctx = document.getElementById('line-chart1').getContext('2d');
+        let ctx2 = document.getElementById('line-chart2').getContext('2d');
+        for (let key in arrayKey) {
+            arrayKey[key]++; 
+        }
+        // data cho biểu đồ gpa trung bình tính theo tổng tất cả các kỳ
+        let data = dataInChart(arrayKey, arrayCurrentMax, arrayCurrentMin, arrayCurrentAvg);
+        let data2 = dataInChart(arrayKey, arraySemesterMax, arraySemesterMin, arraySemesterAvg);
+        if (arrayValue.length > 0) {
+            document.getElementById("br").style.display = '';
+            document.getElementById("message").style.display = 'none';
+            // Tạo đối tượng Chart và gán vào các id đã có trong body html
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    title: {
+                        display: true,
+                        text: titleChart,
+                        fontSize:25,
+                    },
+                    legend:{
+                        display:true,
+                        position:'bottom',
+                        labels:{
+                            fontColor:'#000',
+                            fontSize:17,
+                            fontFamily: 'Arial',
+                        },
+                    },  
+                    scales: {
+                        yAxes: [{
+                            display: true,
+                            ticks: {
+                                beginAtZero: true,
+                                steps: 1,
+                                stepValue: 1,
+                                max: 10
+                            }
+                        }]
+                    },
+                }
+            });
+            chart2 = new Chart(ctx2, {
+                type: 'line',
+                data: data2,
+                options: {
+                    title: {
+                        display: true,
+                        text: titleChart2,
+                        fontSize:25,
+                    },
+                    legend:{
+                        display:true,
+                        position:'bottom',
+                        labels:{
+                            fontColor:'#000',
+                            fontSize:17,
+                            fontFamily: 'Arial',
+                        },
+                    },  
+                    scales: {
+                        yAxes: [{
+                            display: true,
+                            ticks: {
+                                beginAtZero: true,
+                                steps: 1,
+                                stepValue: 1,
+                                max: 10
+                            }
+                        }]
+                    },
+                }
+            });
+        } else {
+            document.getElementById("message").style.display = '';
+            document.getElementById("br").style.display = 'none';
+            document.getElementById("message").innerHTML = '<h3>Thống kê này hiện tại chưa có dữ liệu</h3>';  
+        }
+    }
+
+    // function trả về data của dồ thị gồm 3 đường thẳng min, max, avg(trung bình)
+    function dataInChart(arrayKey, arrayCurrentMax, arrayCurrentMin, arrayCurrentAvg) {
+        return data = {
+            labels: arrayKey,
+            datasets: [
+                {
+                    label: "Điểm cao nhất",
+                    fill: false,
+                    lineTension: 0.1,
+                    borderColor: "#607d8b",
+                    borderCapStyle: 'square',
+                    borderDashOffset: 0.0,
+                    borderJoinStyle: 'miter',
+                    pointBorderColor: "#607d8b",
+                    pointBackgroundColor: "#607d8b",
+                    pointBorderWidth: 1,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: "#607d8b",
+                    pointHoverBorderColor: "#607d8b",
+                    pointHoverBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHitRadius: 10,
+                    data: arrayCurrentMax,
+                    spanGaps: true,
+                },
+                {
+                    label: "Điểm thấp nhất",
+                    fill: false,
+                    lineTension: 0.1,
+                    borderColor: "#ff3300",
+                    borderCapStyle: 'square',
+                    borderDashOffset: 0.0,
+                    borderJoinStyle: 'miter',
+                    pointBorderColor: "#ff3300",
+                    pointBackgroundColor: "#ff3300",
+                    pointBorderWidth: 1,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: "#ff3300",
+                    pointHoverBorderColor: "#ff3300",
+                    pointHoverBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHitRadius: 10,
+                    data: arrayCurrentMin,
+                    spanGaps: true,
+                },
+                {
+                    label: "Điểm trung bình",
+                    fill: false,
+                    lineTension: 0.1,
+                    borderColor: "#ffd24d", 
+                    borderCapStyle: 'square',
+                    borderDashOffset: 0.0,
+                    borderJoinStyle: 'miter',
+                    pointBorderColor: "#ffd24d",
+                    pointBackgroundColor: "#ffd24d",
+                    pointBorderWidth: 1,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: "#ffd24d",
+                    pointHoverBorderColor: "#ffd24d",
+                    pointHoverBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHitRadius: 10,
+                    data: arrayCurrentAvg,
+                    spanGaps: true,
+                },
+            ]
+        }
+    }
+    // renderTable có tồn tại để fetch bên file js không báo lỗi
+    function renderTable(mydata){
+        return 0;
+    }
+</script>
+{% endblock %}

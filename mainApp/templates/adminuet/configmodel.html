@@ -1,0 +1,82 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% load static %}
+<style>
+li {
+  display:inline;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+</style>
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Lựa chọn mô hình</li>
+    </ol>
+    {% include 'student/successmessage.html' %}
+    <div class=" card">
+        <div class="card-body">
+            {% for form in forms %}
+                <form class="p-3 form" method="post" autocomplete="off" action="{{ request.path }}{{form.instance.pk}}">
+                    {% csrf_token %}
+                    <div class="form-group row">
+                        <div class="col-sm-12">
+                            {{form.modelName.value}}
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-sm-12">
+                            {{ form.as_ul }}
+                        </div>
+                    </div>
+                    {% if form.active.value %}
+                        <p>Đang dùng</p>
+                    {% else %}
+                        <p>Không dùng</p>
+                    {% endif %}
+                    <div class="form-group  text-center">
+                        <button type="submit" id="submit" class="m-4 btn activebutton">Sử dụng</button>
+                    </div>
+                </form>
+            {% endfor %}
+        </div>
+    </div>
+</div> 
+<script>
+function test(){
+    listLabel = document.getElementsByTagName('label');
+    for(let i = 0; i < listLabel.length; i++){
+        listLabel[i].classList.add('w-25');
+    }
+    listSelect = document.getElementsByTagName('select');
+    for(let i = 0; i < listSelect.length; i++){
+        listSelect[i].classList.add('form-control');
+        listSelect[i].classList.add('w-50');
+        listSelect[i].classList.add('d-inline');
+    }
+    
+    listInput = document.getElementsByTagName('input');
+    for(let i = 0; i < listInput.length; i++){
+        if (listInput[i].getAttribute('type') == 'number'){
+            listInput[i].classList.add('form-control');
+            listInput[i].classList.add('w-50');
+            listInput[i].classList.add('d-inline');
+        }
+    }
+}
+test();
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Năm học</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form id="form" class="p-3" method="post" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-1"></div>
+                    <div class="col-md-3">
+                        <label for="email" class=" col-form-label">Chọn tệp dữ liệu định dạng csv:</label>
+                    </div>
+                    <div class="col-md-8">
+                        <input type="file" class="btn pl-3" id="fileinput" name="document">
+                        <div class="text-danger pt-3">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <strong>{{ message|safe }}</strong>
+                                {% endfor %}
+                            {% else %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group  text-center pt-5">
+                    <button type="submit" class="btn activebutton" onclick="validateFile()">Đăng tải tệp này</button>
+                    <a href="{% url 'year' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>        
+</div> 
+<script type="text/javascript">
+</script>
+{% endblock %}

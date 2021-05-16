@@ -1,0 +1,114 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Kết quả học tập</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row text-center">
+                    <div class="col-md-12">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <strong>{{ message|safe }}</strong>
+                                {% endfor %}
+                            {% else %}
+                            {% endif %}
+                        </div>
+                        <input hidden name="action" value="upload">
+                        <div class="form-group row p-2">
+                            <div class="col-sm-6 row">
+                                <label class="col-sm-6 text-center">Đơn vị: </label>
+                                <select class="custom-select col-sm-6" name="unit_id">
+                                    {% for unit in units %}
+                                        <option value="{{ unit.pk }}">{{ unit.unitName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-6 row">
+                                <label  class="col-sm-6 text-center">Khóa: </label>
+                                <select class="custom-select col-sm-6" name="generation_id">
+                                    {% for generation in generations %}
+                                        <option value="{{ generation.pk }}">{{ generation.generationName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row p-2">
+                            <div class="col-sm-6 row">
+                                <label class="col-sm-6 text-center">Lớp: </label>
+                                <select class="custom-select col-sm-6" name="group_id">
+                                    {% for group in student_groups %}
+                                        <option value="{{ group.pk }}">{{ group.groupName }} - {{ group.generation.generationName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-6 row">
+                                <label class="col-sm-6 text-center">Chuyên ngành: </label>
+                                <select class="custom-select col-sm-6" name="major_id">
+                                    {% for major in majors %}
+                                        <option value="{{ major.pk }}">{{ major.majorName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row p-2">
+                            <div class="col-sm-6 row">
+                                <label class="col-sm-6 text-center">Kỳ học: </label>
+                                <select class="custom-select col-sm-6" name="semester_id">
+                                    {% for semester in semesters %}
+                                        <option value="{{ semester.pk }}">{{ semester.semesterName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-6 row">
+                                <label class="col-sm-6 text-center">File: </label>
+                                <input type="file" name="transcriptFile" class="col-sm-6" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if uploaded_file_url %}
+                    {% if uploaded_file_url == "error" %}
+                        <p> Upload file failed</p>
+                    {% else %}
+                        <p>File uploaded to: <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a></p>
+                    {% endif %}
+                {% endif %}
+                <div class="form-group  text-center pt-5">
+                    <button type="submit" class="btn activebutton">Đăng tập tin</button>
+                    <input type="button" class="m-4 btn activebutton" value="Quay lại" onClick="javascript:history.go(-1);">
+                </div>
+            </form>
+            <div class="row text-center">
+                <div class="col-md-3"></div>
+                <div class="col-md-6">
+                    <h3>EXTRACT FILE</h3>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input hidden name="action" value="extract">
+                        <div class="form-group row p-2">
+                            <label class="col-sm-6 text-center">Bảng điểm: </label>
+                            <select name="file_id" class="custom-select col-sm-6">
+                                {% for file in transcript_files %}
+                                    <option value="{{ file.pk }}">{{ file }} {{ file.unit.unitName }} {{ file.generation.generationName }} {{ file.group.groupName }} {{ file.semester.semesterName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit"  class="btn activebutton">Extract</button>
+                        {% if extract_result %}
+                            <p>File extract is {{ extract_result }}</p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div> 
+    </div>        
+</div> 
+{% endblock %}

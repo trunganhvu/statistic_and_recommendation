@@ -1,0 +1,175 @@
+{% extends "./base.html" %}
+{% block content %}
+{% load static %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Logs</li>
+    </ol>
+    {% include 'student/successmessage.html' %}
+    <div class=" card">
+        <div class="card-header">
+            <h5>Logs</h5>
+        </div>
+        <div class="card-body">
+            <div class="card-title row form-inline">
+                <div class="col-sm-7">
+                    <a href="" class="btn activebutton"  data-toggle="modal" data-target="#exampleModal">Xóa</a>
+                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Xóa</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="text-danger" id="messages"></div>
+                                    <div class="form-group pb-3">
+                                        <label for="exampleFormControlInput1" class="col-sm-5 col-form-label">Từ ngày:</label>
+                                        <div class="col-sm-7">
+                                            <input class="form-control" type="date" name="fromdate" id="from-datetime-input" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group pb-3">
+                                        <label for="exampleFormControlInput1" class="col-sm-5 col-form-label">Đến ngày:</label>
+                                        <div class="col-sm-7">
+                                            <input class="form-control" type="date" name="todate" id="to-datetime-input" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="" class="btn activebutton" id="btn-delete" data-toggle="modal" onclick="renderToConfirmDelete()">Xóa</a>
+                                    <a href="#" class="btn btn-secondary" data-dismiss="modal">Hủy</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal" id="confirmDelete" tabindex="-1" data-backdrop="static">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <form method="post" action="{% url 'logs-delete' %}">
+                                    {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Bạn có chắc chắn muốn xóa logs?</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group pb-3">
+                                        <label for="exampleFormControlInput1" class="col-sm-5 col-form-label">Từ ngày:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" readonly class="form-control-plaintext" name="fromdate" id="from-date-delete">
+                                        </div>
+                                    </div>
+                                    <div class="form-group pb-3">
+                                        <label for="exampleFormControlInput1" class="col-sm-5 col-form-label">Đến ngày:</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" readonly class="form-control-plaintext" name="todate" id="to-date-delete">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn activebutton" data-toggle="modal" data-target="#confirmDelete">Xóa</button>
+                                    <a href="#" class="btn btn-secondary" data-dismiss="modal">Quay lại</a>
+                                </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <select id="numberofrow" class="custom-select col-sm-2" onchange="redictUrlClickOption()">
+                        <option value="10">10</option>
+                        <option value="100" >100</option>
+                        <option value="1000">1000</option>
+                        <option value="3000">3000</option>
+                        <option value="5000">5000</option>
+                    </select>
+                </div>
+                <div class=" form-inline col-sm-5">
+                    <input class="form-control col-sm-12 inline" id="myInput" type="text" onkeyup="searchThreeField()" placeholder="Tìm kiếm...">
+                </div>
+            </div>
+            <div class="table-data">
+                <table class="table" id="myTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th scope="col">STT</th>
+                            <th scope="col">Người dùng</th>
+                            <th scope="col">Thời gian</th>
+                            <th scope="col">Hành động</th>
+                            <th scope="col">Nội dung</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center">
+            <nav aria-label="Page navigation ">
+                <ul id="pagination" class="pagination justify-content-center">
+                </ul>
+            </nav>
+            </div>
+        </div> 
+    </div>
+</div> 
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script>
+    function renderToConfirmDelete(){
+        let fromdate = document.getElementById('from-datetime-input').value;
+        let todate = document.getElementById('to-datetime-input').value;
+        if (checkDate(fromdate, todate)){
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('btn-delete').href = "#confirmDelete";
+            document.getElementById('from-date-delete').value = fromdate;
+            document.getElementById('to-date-delete').value = todate;
+        }
+    }
+    function checkDate(fromdate, todate){
+        if (fromdate == "" || todate == ""){
+            document.getElementById('messages').innerHTML = 'Hãy lựa chọn ngày mong muốn.';
+            return false;
+        } 
+        if (todate < fromdate){
+            document.getElementById('messages').innerHTML = 'Hãy lựa chọn lại ngày.';
+            return false;
+        }
+        return true;
+    }
+</script>
+<script type="text/javascript" src="{% static 'js/table.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/searchtwofield.js' %}"></script>
+<script type="text/javascript">
+    let pathAdmin = '/adminuet';
+    let url_api = '';
+    let offset = ({{ page }} - 1) * getNumberOfRowInSelections(); //offet để truyền vào api để truy vấn từ ví trí offset
+    let limit = {{limit}}; //limt lấy ban đầu từ url page1/limit10/ là giá trị mặc định
+    let pathForPage = '/logs/page';
+    let pathApiGetList = '/logs-getlist/';
+    let currentPage = {{page}};
+    
+    main(offset, limit);
+
+    function renderTable(mydata){
+        let url_delete = pathAdmin + '/log-delete/';
+        let units = mydata.data;
+        let rowHTML = [];
+        for (let [index, data] of units.entries()){
+            let tempIndex = index + 1 + limit * ({{ page }} - 1);
+            let row = '<tr>'
+                    + '<td>' + tempIndex + '</td>'
+                    + '<td>' + encodeHTML(data.user) + '</td>'
+                    + '<td>' + encodeHTML(data.time) + '</td>'
+                    + '<td>' + encodeHTML(data.action) + '</td>'
+                    + '<td>' + encodeHTML(data.content) + '</td>'
+                    + '</tr>';
+            rowHTML.push(row);
+        }
+        document.getElementById("table-body").innerHTML += rowHTML.join("");
+    }
+    checkArgeeDelete = function(courseCode){
+        let msg = confirm("Xóa dữ liệu này sẽ mất hết các dữ liệu khác liên quan.\nBạn chắc chắn muốn xóa?");
+        if (!msg) {
+            event.preventDefault();
+        }
+    }
+</script>
+{% comment %} <script type="text/javascript" src="{% static 'js/sort.js' %}"></script> {% endcomment %}
+{% endblock %}

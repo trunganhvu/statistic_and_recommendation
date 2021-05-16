@@ -1,0 +1,351 @@
+{% extends "./base.html" %}
+{% block content %}
+{% load static %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<link href="{% static 'css/select2.min.css' %}" rel="stylesheet" />
+<style>
+.select2-container{width:100%!important}
+b{margin-top: 2px !important}
+.select2-selection{
+    border: 1px solid #ced4da!important;
+    height: calc(1.5em + .75rem + 2px)!important;
+    padding: .2rem .25rem !important;
+}
+</style>
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Thống kê</li>
+        <li class="breadcrumb-item active" aria-current="page">Điểm trung bình</li>
+    </ol>
+    <div class=" card">
+        <div class="card-header">
+            <h5>Thống kê</h5>
+        </div>
+        <div class="card-body ">
+            <a href="" class="btn activebutton"  data-toggle="modal" data-target="#exampleModal">Tạo biểu đồ</a>
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <form>
+                            <div class="modal-body">
+                                <div class="text-danger" id="messages"></div>
+                                <div class="form-group pb-3">
+                                    <label for="unit-filter" class="col-form-label">Trường:</label>
+                                    <select class="col-sm-12 custom-select" name="unit-filter" id="unit-filter" onchange="getMajor()">
+                                        <option value="none">Lựa chọn</option>
+                                        {% if units %}
+                                            {% for unit in units %}
+                                                <option value="{{ unit.unitID }}">{{ unit.unitName }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                    <label for="major-filter" class=" col-form-label">Ngành:</label>
+                                    <select class="col-sm-12 select2-hidden-accessible custom-select" name="major-filter" id="major-filter" onchange="getCourse()">
+                                    <option value="none">Lựa chọn</option>
+                                    </select>
+                                    <label for="course-filter" class="col-form-label">Môn:</label>
+                                    <select class="col-sm-12 custom-select" name="course-filter" id="course-filter">
+                                    <option value="none">Lựa chọn</option>
+                                    </select>
+                                    <label for="year-start-filter" class="col-form-label">Năm bắt đầu:</label>
+                                    <select class="col-sm-12 custom-select" name="year-start-filter" id="year-start-filter">
+                                    </select>
+                                    <label for="year-end-filter" class="col-form-label">Năm kết thúc:</label>
+                                    <select class="col-sm-12 custom-select" name="year-end-filter" id="year-end-filter">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="" class="btn activebutton" id="btn-create-chart" data-toggle="modal" onclick="changChart()">Tạo biểu đồ</a>
+                                <a href="#" class="btn btn-secondary" data-dismiss="modal">Hủy</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="text-danger" id="messagesGetChart" style="display:none">Thống kê này hiện tại chưa có dữ liệu</div>
+            <canvas id="bar-chart" width="800" height="450"></canvas>
+            <div class="d-flex justify-content-center" >
+                <table class="table table-bordered w-50" id="table-statistical">
+                    <thead>
+                        <tr>
+                            <td width="50%">Năm học</td>
+                            <td width="50%">Tổng sinh viên</td>
+                        </tr>
+                    </thead>
+                    <tbody id="data-json-number-grade">
+                    </tbody>
+                </table>
+            </div>
+        </div>  
+    </div>
+</div> 
+{% comment %} <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script> {% endcomment %}
+<script type="text/javascript" src="{% static 'js/chart.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/select2.min.js' %}"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#unit-filter').select2();
+        $('#major-filter').select2();
+        $('#course-filter').select2();
+    });
+</script>
+<script>
+    let chart;
+    let pathAPI = '/statistic/course_avg' ;
+    sessionStorage.clear();
+    // lấy url API và fetch lấy dữ liệu và tạo child của select-html
+    // Khi nhân thay đổi trường(Unit) thì hiển thị ra các Ngành
+    function getMajor(){
+        let unitID = document.getElementById('unit-filter').value;
+        let url_api = changeUnitToCallAPI('majors/', unitID);
+        let option = document.createElement('option');
+
+        let selectMajor = document.getElementById('major-filter');
+        selectMajor.querySelectorAll('*').forEach(n => n.remove());
+        option = document.createElement('option');
+        option.appendChild(document.createTextNode("Lựa chọn"));
+        option.value = "none";
+        selectMajor.appendChild(option);
+
+        let selectCourse = document.getElementById('course-filter');
+        selectCourse.querySelectorAll('*').forEach(n => n.remove());
+        option = document.createElement('option');
+        option.appendChild(document.createTextNode("Lựa chọn"));
+        option.value = "none";
+        selectCourse.appendChild(option);
+
+        fetch(url_api)
+        .then(function(response) {
+            if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+            let myjson_data = response.json();
+            return myjson_data;
+        })
+        .then(function(mydata){
+            option.appendChild(document.createTextNode("Lựa chọn"));
+            option.value = "none";
+            for (let i = 0; i < mydata.length; i++){
+                let id = mydata[i].majorID;
+                let majorName = mydata[i].majorName
+                option = document.createElement('option');
+                option.appendChild(document.createTextNode(majorName));
+                option.value = id;
+                selectMajor.appendChild(option);
+            } 
+        })
+        .catch(function(error) {
+            console.log("error");
+        })
+    }
+    // lấy url API và fetch lấy dữ liệu và tạo child của select-html
+    // Khi nhân thay đổi Ngành(Major) thì hiển thị ra các Môn(Courses)
+    function getCourse(){
+        let majorID = document.getElementById('major-filter').value;
+        let url_api = changeUnitToCallAPI('courses/', majorID);
+        fetch(url_api)
+        .then(function(response) {
+            if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+            let myjson_data = response.json();
+            return myjson_data;
+        })
+        .then(function(mydata){
+            let selectCourse = document.getElementById('course-filter');
+            selectCourse.querySelectorAll('*').forEach(n => n.remove());
+            let option = document.createElement('option');
+            option.appendChild(document.createTextNode("Lựa chọn"));
+            option.value = "none";
+            selectCourse.appendChild(option);
+            for (let i = 0; i < mydata.length; i++){
+                let id = mydata[i].courseID;
+                let name = mydata[i].counseCode + ' - ' + mydata[i].courseName;
+                option = document.createElement('option');
+                option.appendChild(document.createTextNode(name));
+                option.value = id;
+                selectCourse.appendChild(option);
+            } 
+        })
+        .catch(function(error) {
+            console.log("error");
+        })
+    }
+    // lấy url API và fetch lấy dữ liệu và tạo child của select-html
+    // Khi nhân thay đổi năm học(year) thì hiển thị ra các Ngành
+    function getYear(typeSort, idName){
+        let url_api = changeUnitToCallAPI('years/', typeSort);
+        fetch(url_api)
+        .then(function(response) {
+            if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+            let myjson_data = response.json();
+            return myjson_data;
+        })
+        .then(function(mydata){
+            let selectYear = document.getElementById(idName);
+            selectYear.querySelectorAll('*').forEach(n => n.remove());
+            let option = document.createElement('option');
+            option.appendChild(document.createTextNode("Lựa chọn"));
+            option.value = "none";
+            selectYear.appendChild(option);
+            for (let i = 0; i < mydata.length; i++){
+                let id = mydata[i].yearID;
+                let yearName = mydata[i].yearName
+                option = document.createElement('option');
+                option.appendChild(document.createTextNode(yearName));
+                option.value = id;
+                selectYear.appendChild(option);
+            } 
+        })
+        .catch(function(error) {
+            console.log("error");
+        })
+    }
+    getYear('asc/0', 'year-start-filter');
+    getYear('desc/0', 'year-end-filter');
+    // Xử lý sự kiện tạo ra một biểu đồ mới
+    // reset lại chart để không còn dữ liệu cũ
+    // lấy dự liệu từ api
+    function changChart(){
+        if (chart !== undefined){
+            chart.destroy();
+        }
+        if (validateValueFilter()){
+            let url = getValueFilter();
+            fetchJson(pathAPI, url);
+            sessionStorage.setItem("SessionName",url);
+        } else {
+            renderChart(mstData);
+        }
+    }
+    // Nếu load lần đầu thì set kích thước = 0 
+    if (chart === undefined){
+        document.getElementById("bar-chart").style.width = "0px";
+        document.getElementById("bar-chart").style.height = "0px";
+        document.getElementById('table-statistical').style.display = "none";
+    }
+    // Validate các filter nếu tất cả input có dữ liệu và year-start-filter <= year-end-filter thì return true
+    function validateValueFilter(){
+        let unit = document.getElementById("unit-filter").value;
+        let course = document.getElementById("course-filter").value;
+        let yearStart = document.getElementById("year-start-filter");
+        let yearEnd = document.getElementById("year-end-filter");
+        let path = '/' + course + '/' + yearStart.value + '/' + yearEnd.value;
+        let yearFirst = yearStart.options[yearStart.selectedIndex].text.split('-')[0];
+        let yearLast = yearEnd.options[yearEnd.selectedIndex].text.split('-')[0];
+        document.getElementById("btn-create-chart").removeAttribute("data-dismiss");
+        if (path == sessionStorage.getItem("SessionName") && sessionStorage.getItem("SessionName") !== null){
+            return false;
+        } else if (unit == "" || course == "" || yearStart.value == "" || yearEnd.value == "" || unit == "none" || course == "none"){
+            document.getElementById("messages").innerHTML = "Hãy chọn lại đầy đủ các thông tin.";
+            return false;
+        } else if (yearFirst > yearLast){
+            document.getElementById("messages").innerHTML = "Hãy chọn lại Năm bắt đầu và năm kết thúc.";
+            return false;
+        } else {
+            document.getElementById("messages").innerHTML = '';
+            document.getElementById("btn-create-chart").setAttribute("data-dismiss", "modal");
+        }
+        return true;
+    }
+
+    // get thông tin trong các filter input người dùng
+    // trả về path theo tứ tự trong url api 
+    function getValueFilter(){
+        let course = document.getElementById("course-filter").value;
+        let yearStart = document.getElementById("year-start-filter").value;
+        let yearEnd = document.getElementById("year-end-filter").value;
+        return '/' + course + '/' + yearStart + '/' + yearEnd;
+    }
+    
+    // Hàm renderChart() nhận đầu vào là dữ liệu json của fetchJson đã get từ API
+    // render ra các dòng và thao tác ở trong bảng dữ liệu.
+    function renderChart(mydata){
+        let arrayKey = Object.keys(mydata.year);
+        if (arrayKey.length > 0) {
+            let arrayValue = Object.values(mydata.year);
+            let course = document.getElementById("course-filter").options[document.getElementById("course-filter").selectedIndex].text;
+            let arrayAVG = []
+            for (let i = 0; i < arrayValue.length; i++) {
+                arrayAVG.push(arrayValue[i].avg_grade);
+            }
+            let titleChart = 'Thống kê điểm trung bình các năm môn ' + course;
+            let ctx = document.getElementById('bar-chart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: arrayKey,
+                    datasets: [
+                        {
+                            label: "Điểm trung bình",
+                            backgroundColor: "#607d8b",
+                            data: arrayAVG,
+                        }
+                    ]
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: titleChart,
+                        fontSize:25,
+                    },
+                    legend:{
+                        display:true,
+                        position:'bottom',
+                        labels:{
+                            fontColor:'#000',
+                            fontSize:17,
+                            fontFamily: 'Arial',
+                        },
+                    },  
+                    scales: {
+                        yAxes: [{
+                            display: true,
+                            ticks: {
+                                beginAtZero: true,
+                                steps: 1,
+                                stepValue: 1,
+                                max: 10
+                            }
+                        }]
+                    },
+                }
+            });
+        } else {
+            document.getElementById('messagesGetChart').style.display = '';
+        }
+    }
+
+    // render ra bảng thông tin bổ xung cho biểu đồ
+    // mydata là dữ liệu json mà api trả về
+    // gắn dữ liệu của các thuộc tính vào thẳng thẻ html
+    function renderTable(mydata){
+        let arrayKey = Object.keys(mydata.year);
+        if (arrayKey.length > 0) {
+            let arrayValue = Object.values(mydata.year);
+            let arrayNumberOfGrade = {}
+            document.getElementById('table-statistical').style.display = "";
+            for (let i = 0; i < arrayValue.length; i++) {
+                if (!checkValuePointApi(arrayValue[i].num_of_grade)) {
+                    arrayNumberOfGrade[arrayKey[i]] = "Chưa có thông tin";
+                } else {
+                    arrayNumberOfGrade[arrayKey[i]] = arrayValue[i].num_of_grade;
+                }
+            }
+            let dataInTable = '';
+            for (let key in arrayNumberOfGrade){
+                dataInTable += '<tr><td>' + key + '</td>'
+                        + '<td>' + arrayNumberOfGrade[key] + '</td></tr>';
+            }
+            document.getElementById("data-json-number-grade").innerHTML  = dataInTable;
+        } else {
+            document.getElementById('table-statistical').style.display = 'none';
+        }
+    }
+    // check value input point là null thì trả về false
+    function checkValuePointApi(point) {
+        if (point == null) {
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Khung đào tạo</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form id="form" class="p-3" method="post" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row text-center">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message|safe }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="unit" class="col-form-label">Trường<span class="asteriskField">*</span></label>
+                                <select class="col-sm-12 select2-hidden-accessible custom-select" name="unit" id="unit-field" onchange="getMajor()" required>
+                                    {% if units %}
+                                        <option value="none">Lựa chọn</option>
+                                        {% for unit in units %}
+                                           <option value="{{ unit.unitID }}">{{ unit.unitName }} </option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="major" class="col-form-label">Ngành<span class="asteriskField">*</span></label>
+                                <select class="col-sm-12 select2-hidden-accessible custom-select" name="major" id="major-field" required>
+                                        {% comment %} <option value="">Lựa chọn</option> {% endcomment %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                <label for="emdocumentail" class=" col-form-label">Chọn tệp dữ liệu định dạng csv<span class="asteriskField">*</span></label>
+                                <input type="file" class="btn pl-3" id="fileinput" name="document" required>
+                            </div>
+                            <div class="col-sm-12">                            
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                <div class="form-group  text-center pt-5">
+                    <button type="submit" class="btn activebutton" onclick="validateFile()">Đăng tải tệp này</button>
+                    <a href="{% url 'trainingframework' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>        
+</div> 
+<script type="text/javascript">
+    function changeUnitToCallAPI(){
+        let pathAPI = '/adminuet/base-list/' ;
+        let objectGet = 'majors/';
+        let unitID = document.getElementById('unit-field').value;
+        let url_api = 'http://'+ window.location.host + pathAPI  + objectGet + unitID;
+        return url_api;
+    }
+    function fetchJson(url_api){
+        console.log(url_api);
+        fetch(url_api)
+        .then(function(response) {
+            if(!response.ok) throw new Error("HTTP error, status = " + response.status);
+            let myjson_data = response.json();
+            return myjson_data;
+        })
+        .then(function(mydata){
+            setMajorToSelect(mydata);
+        })
+        .catch(function(error) {
+            console.log("error");
+        })
+    }
+    function getMajor(){
+        fetchJson(changeUnitToCallAPI());
+        let selectMajor = document.getElementById('major-field');
+        while (selectMajor.firstChild) {
+            selectMajor.removeChild(selectMajor.lastChild);
+        }
+    }
+
+    function setMajorToSelect(mydata){
+        let selectMajor = document.getElementById('major-field');
+        let option = document.createElement('option');
+        option.appendChild(document.createTextNode("Lựa chọn"));
+        option.value = "none";
+        selectMajor.appendChild(option);
+        for (let i = 0; i < mydata.length; i++){
+            let id = mydata[i].majorID;
+            let majorName = mydata[i].majorName
+            option = document.createElement('option');
+            option.appendChild(document.createTextNode(majorName));
+            option.value = id;
+            selectMajor.appendChild(option);
+        }
+    }
+</script>
+{% endblock %}

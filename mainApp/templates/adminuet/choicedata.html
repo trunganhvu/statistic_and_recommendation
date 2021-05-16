@@ -1,0 +1,120 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% load static %}
+<link href="{% static 'css/select2v4.min.css' %}" rel="stylesheet" />
+<style type="text/css">
+b{margin-top: 2px !important}
+.select2-selection{
+    border: 1px solid #ced4da!important;
+    height: calc(1.5em + .75rem + 2px)!important;
+    padding: .2rem .25rem !important;
+}
+@media only screen and (max-width: 992px) {
+    .select2-container{width:100%!important}
+}
+</style>
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Quản trị</li>
+        <li class="breadcrumb-item active" aria-current="page">Lựa chọn dữ liệu</li>
+    </ol>
+    {% include 'student/successmessage.html' %}
+    <div class="card">
+        <div class="card-body">
+            <form class="p-3" method="post" id="form-generation" autocomplete="off">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <div class="col-sm-12">  
+                                <label for="major" class="requiredField">Dữ liệu huấn luyện theo khoa
+                                    <span class="asteriskField">*</span>
+                                </label>                           
+                                <select class="col-sm-12 custom-select" name="major_id" id="major-filter" onchange="">
+                                    <option value="none">Lựa chọn</option>
+                                    {% if trainDatas %}
+                                        {% for trainData in trainDatas %}
+                                            <option value="{{ trainData.major.majorID }}"
+                                                {% if major %}
+                                                    selected
+                                                {% endif %}
+                                            >{{ trainData.major.majorName }} ({{ trainData.updateTime }})</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <div class="col-sm-12">  
+                                <label for="generation" class="requiredField">Khóa áp dụng dữ liệu huấn luyện 
+                                {% if generationLast %}
+                                    {% for g in generationLast %}
+                                        {{ g }}
+                                    {% endfor %}
+                                {% endif %}
+                                    <span class="asteriskField">*</span>
+                                </label>                           
+                                <select class="col-sm-12 js-example-basic-multiple" multiple="multiple" name="generation_id" id="generation-filter" onchange="">
+                                    <option value="none">Lựa chọn</option>
+                                    {% if generations %}
+                                        {% for generation in generations %}
+                                            {% if generationLast %}
+                                                {% comment %} {% for g in generationLast %}
+                                                    {% if generation.generationID == g %}
+                                                        
+                                                        <option value="{{ generation.generationID }}" selected>{{ generation.generationName }} - {{ generation.unit.unitName }}</option>
+
+                                                    {% else %}
+                                                        <option value="{{ generation.generationID }}" >{{ generation.generationName }} - {{ generation.unit.unitName }}</option>
+
+                                                    {% endif %}
+                                                {% endfor %} {% endcomment %}
+                                                {% if generation.generationID in generationLast %}
+                                                    <option value="{{ generation.generationID }}" selected>{{ generation.generationName }} - {{ generation.unit.unitName }}</option>
+                                                
+                                                {% else %}
+                                                    <option value="{{ generation.generationID }}">{{ generation.generationName }} -1 {{ generation.unit.unitName }}</option>
+                                                {% endif %}
+                                            {% else %}
+                                                <option value="{{ generation.generationID }}" >{{ generation.generationName }} -2 {{ generation.unit.unitName }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="text-center my-3">
+                    <span class="asteriskField" id="time-update"></span>
+                </div>
+                <div class="form-group text-center mt-5">
+                    <button type="submit" class="btn activebutton" onclick=""  id="get-scoreforecast-generation">
+                        {% comment %} <div id="spinner-border" class="spinner-border text-light" role="status">
+                            <span class="sr-only">Loading...</span>   disabled
+                        </div> {% endcomment %}
+                        Sử dụng dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div> 
+    </div>
+</div>
+<script type="text/javascript" src="{% static 'js/select2.full.min.js' %}"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#generation-filter').select2();
+        $('#major-filter').select2();
+    });
+</script>
+{% endblock %}

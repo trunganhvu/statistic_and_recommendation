@@ -1,0 +1,75 @@
+{% extends "../bootstrap.html" %}
+{% load bootstrap4 %}
+{% block title %}Hệ thống dự báo và tư vấn kết quả học tập{% endblock %}
+{% load static %}
+{% block bootstrap4_content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/baseadmin.css' %}">
+<link rel="shortcut icon" href="{% static 'images/logo2_new.png' %}"/>
+<style>
+.card {border-radius: 21px;}
+.footer {
+    font-size: 13px;
+    min-width: 450px;
+    bottom: 0;
+}
+body {
+    min-width: 450px;
+}
+</style>
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom ">
+        <a class=" my-0 mr-md-auto font-weight-normal navbar-brand">
+            <img src="{% static 'images/logo2_new.png' %}" alt="Logo">
+            Hệ thống dự báo và tư vấn kết quả học tập
+        </a>
+        <nav class="my-2 my-md-0 mr-md-3">
+            <a id="" class="p-2 text-muted" href="{% url 'trangchu' %}">Trang chủ</a>
+            <a id="login" class="p-2 text-muted" href="{% url 'login' %}">Đăng nhập</a>
+        </nav>
+    </div>       
+    <div class="container">
+        <div class="row pt-5">
+            <div class="col-sm-3"></div>
+            <div class="card col-sm-6 shadow-lg border">
+                <form class="p-5 justify-content-center" id="login_form" method="post" action="/login/">
+                    {% csrf_token %}
+                    <div class="text-danger pl-3">
+                        {% if messages %}
+                            {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group pl-3 pr-3 pt-2 pb-2">
+                        <label for="username">Tên đăng nhập</label>
+                        {% if username %}
+                            <input type="text" class="form-control form-control-lg" name="username" value="{{ username }}">
+                        {% else %}
+                            <input type="text" class="form-control form-control-lg" name="username" placeholder="Tên đăng nhập">
+                        {% endif %}
+                    </div>
+                    <div class="form-group pl-3 pr-3 pt-2 pb-2">
+                        <label for="password">Mật khẩu</label>
+                        <input type="password" class="form-control form-control-lg" name="password" placeholder="Mật khẩu">
+                    </div>
+                    <div class="col text-center pl-3 pr-3 pt-2 pb-2 ">
+                        <button type="submit" class="btn activebutton btn-lg btn-block">Đăng nhập</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white mt-3 p-4 footer">
+        <div class="text-center text-secondary">
+            Phiên bản thử nghiệm sản phẩm phần mềm của Đề tài QG.20.57.<br>
+            © Bản quyển thuộc Đại học Quốc Gia Hà Nội, Trường Đại học Công nghệ<br>
+            Nhóm tác giả thực hiện đề tài.
+        </div>
+    </div>
+    <script>
+        let pathname_url = window.location.pathname; 
+        let pathname_url_active = pathname_url.split("/")[1];
+        function activaCurrentUrlElement(){            
+            let element = document.getElementById(pathname_url_active);
+            if (element != null) element.classList.add("activeElementUrl");      
+        }
+        activaCurrentUrlElement();
+    </script>
+{% endblock %}

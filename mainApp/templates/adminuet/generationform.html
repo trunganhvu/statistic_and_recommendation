@@ -1,0 +1,68 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Khóa</li>
+    </ol>
+    {% include 'student/successmessage.html' %}
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                {{form.unit|as_crispy_field}}
+                            </div>
+                            
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                {{form.beginningYear|as_crispy_field}}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                {{form.generationName|as_crispy_field}}
+                            </div>
+                            <div class="col-sm-12">                            
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="form-group  text-center">
+                    <button type="submit" id="submit" class="m-4 btn activebutton">Thêm mới</button>
+                    <a href="{% url 'generation' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>
+</div> 
+<script type="text/javascript">
+    let textBtn = () => {  
+        if (document.getElementsByTagName("input")[1].value) document.getElementById("submit").innerText = "Cập nhật";
+    }
+    textBtn();
+    function setSelectBox(){
+        let unitRole = {{unitRole}};
+        console.log(unitRole);
+        if (unitRole != 0) {
+            document.getElementById("id_unit").value = unitRole;
+            document.getElementById("id_unit").disabled = "disabled";
+        }
+    }
+    setSelectBox();
+</script>
+{% endblock %}

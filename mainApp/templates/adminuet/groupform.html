@@ -1,0 +1,97 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Lớp</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off">
+                {% csrf_token %}
+                <div class="row text-center">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">
+                                {{form.generation|as_crispy_field}}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                {{form.groupName|as_crispy_field}}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                {% comment %} {{form.majorDescription|as_crispy_field}} {% endcomment %}
+                            </div>
+                            <div class="col-sm-12">                            
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                    <div class="form-group  text-center">
+                    <button type="submit" id="submit" class="m-4 btn activebutton">Thêm mới</button>
+                    <a href="{% url 'group' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>
+</div> 
+<script type="text/javascript">
+    let textBtn = () => {  
+        if (document.getElementsByTagName("input")[1].value) document.getElementById("submit").innerText = "Cập nhật";
+    }
+    textBtn();
+    function getMapGeneration(){
+        let map = new Map();
+        {% for generation in listGeneration %}
+            map.set({{generation.generationID}}, '{{generation}}');
+        {% endfor %}
+        return map;
+    }
+    function getArrayKeyInMap(map) {
+        let arr = [];
+        for (let [index, data] of map.entries()) {
+            arr.push(index);
+        }
+        return arr;
+    }
+
+    function setSelectBoxGeneration(){
+        let map = getMapGeneration();
+        let arr = getArrayKeyInMap(map);
+        let courseSelect = document.getElementById("id_generation");
+        let arrResult = [];
+        for (let i = 1; i < courseSelect.length; i++) {
+            if (arr.indexOf(parseInt(courseSelect.options[i].value)) == -1) {
+                arrResult.push(courseSelect.options[i].value);
+            }
+        }
+        for (let element in arrResult) {
+            for (let i = 0; i < courseSelect.length; i++){
+                if (courseSelect.options[i].value == arrResult[element]){
+                    courseSelect.remove(i);
+                }
+            }
+        }
+    }
+    function main(){
+        let unitRole = {{unitRole}};
+        if (unitRole > 0) {
+            setSelectBoxGeneration();
+        }
+    }
+    main();
+</script>
+{% endblock %}

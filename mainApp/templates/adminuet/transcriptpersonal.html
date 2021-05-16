@@ -1,0 +1,25 @@
+{% extends "./baseprofile.html" %}
+{% block content-profile %}
+<div class="card">
+   <form class="p-3">
+        <table class="table">
+        {% for transcript, value in transcriptsResult.items %}
+            <thead class="thead-light">
+                <tr>
+                    <th colspan="3">{{transcript}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in value %}
+                    <tr>
+                        <td>{{v.courseCode}}</td>
+                        <td>{{v.courseName}}</td>
+                        <td>{{v.grade}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        {% endfor %}
+        </table>
+   </form>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "./base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/baseadmin.css' %}">
+<style>
+.custom-control-description{
+    font-weight: normal;
+}
+</style>
+<div class="container">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% if user.is_authenticated %}{{ user.username }}{% endif %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Danh mục</li>
+        <li class="breadcrumb-item active" aria-current="page">Vai trò</li>
+    </ol>
+    <div class=" card">
+        <div class="card-body">
+            <form class="p-3" method="post" autocomplete="off" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="text-danger">
+                            {% if messages %}
+                                {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                <label class=" requiredField" for="roleName"><strong>Tên vai trò</strong>
+                                    <span class="asteriskField">*</span>
+                                </label><br>
+                                {% if roleNameLast %}
+                                    <input class="textinput textInput form-control" type="text" name="roleName" value="{{roleNameLast}}">
+                                {% else %}
+                                    <input class="textinput textInput form-control" type="text" name="roleName" value="">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-group row pt-2">
+                            <div class="col-sm-12">   
+                                <label class=" requiredField" for="function"><strong>Lựa chọn chức năng</strong>
+                                    <span class="asteriskField">*</span>
+                                </label><br>  
+                                {% for function in functions %}
+                                    <label class="custom-control custom-checkbox">
+                                        {% if function.functionID in functionOfRole %}
+                                            <input type="checkbox" class="custom-control-input" name="function" value="{{ function.functionID }}" checked>
+                                        {% else %}
+                                            <input type="checkbox" class="custom-control-input" name="function" value="{{ function.functionID }}">
+                                        {% endif %}
+                                        <span class="custom-control-indicator"></span>
+                                        <span class="custom-control-description">{{ function }}</span>
+                                    </label><br>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                            
+                                <label class=" requiredField" for="roleDescription"><strong>Mô tả</strong>
+                                </label><br>
+                                {% if roleDescriptionLast %}
+                                    <input class="textinput textInput form-control" type="text" name="roleDescription" value="{{roleDescriptionLast}}">
+                                {% else %}
+                                    <input class="textinput textInput form-control" type="text" name="roleDescription" value="">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-12">                    
+                                <span class="asteriskField"><small>* Bắt buộc.</small></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+                <div class="form-group  text-center">
+                    <button type="submit" id="submit" class="m-4 btn activebutton">Thêm mới</button>
+                    <a href="{% url 'role' %}" class="btn activebutton">Quay lại</a>
+                </div>
+            </form>
+        </div> 
+    </div>
+</div> 
+<script type="text/javascript">  
+    let textBtn = () => {  
+        if (document.getElementsByTagName("input")[1].value) document.getElementById("submit").innerText = "Cập nhật";    
+    }
+    textBtn();
+</script>
+{% endblock %}
